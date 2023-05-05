@@ -8,13 +8,10 @@
 
 import 'dart:convert';
 import 'dart:typed_data' show Uint8List;
-import 'dart:ui';
-
 import 'package:hex/hex.dart';
 import 'package:image/image.dart';
 import 'package:gbk_codec/gbk_codec.dart';
 import 'package:esc_pos_utils/esc_pos_utils.dart';
-import 'enums.dart';
 import 'commands.dart';
 
 class Generator {
@@ -73,7 +70,7 @@ class Generator {
         .replaceAll("’", "'")
         .replaceAll("´", "'")
         .replaceAll("»", '"')
-        .replaceAll(" ", ' ')
+        .replaceAll(" ", ' ')
         .replaceAll("•", '.');
     if (!isKanji) {
       return latin1.encode(text);
@@ -149,7 +146,6 @@ class Generator {
     final biggerImage = copyResize(image, width: widthPx, height: heightPx);
     fill(biggerImage, color: ColorRgb8(0, 0, 0));
     // Insert source image into bigger one
-
     compositeImage(biggerImage, image, dstX: 0, dstY: 0);
 
     int left = 0;
@@ -158,7 +154,9 @@ class Generator {
     while (left < widthPx) {
       final Image slice = copyCrop(biggerImage,
           x: left, y: 0, width: lineHeight, height: heightPx);
-      final Uint8List bytes = slice.getBytes();
+      grayscale(slice);
+      final imgBinary = slice.convert(numChannels: 1);
+      final Uint8List bytes = imgBinary.getBytes();
       blobs.add(bytes);
       left += lineHeight;
     }
@@ -177,7 +175,7 @@ class Generator {
 
     // R/G/B channels are same -> keep only one channel
     final List<int> oneChannelBytes = [];
-    final List<int> buffer = image.getBytes();
+    final List<int> buffer = image.getBytes(order: ChannelOrder.rgba);
     for (int i = 0; i < buffer.length; i += 4) {
       oneChannelBytes.add(buffer[i]);
     }
